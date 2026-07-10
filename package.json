@@ -1,0 +1,31 @@
+{
+  "name": "happy-home",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "scrape": "tsx src/scraper/run.ts",
+    "typecheck": "tsc --noEmit",
+    "ingest": "tsx src/pipeline/ingest.ts",
+    "watch": "tsx src/pipeline/watch.ts",
+    "server": "tsx src/server/index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@hono/node-server": "^2.0.8",
+    "better-sqlite3": "^12.11.1",
+    "cheerio": "^1.2.0",
+    "hono": "^4.12.28",
+    "node-cron": "^4.6.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^26.1.1",
+    "tsx": "^4.23.0",
+    "typescript": "^7.0.2"
+  }
+}

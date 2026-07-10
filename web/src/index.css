@@ -1,0 +1,27 @@
+@import 'tailwindcss';
+
+@theme {
+  /* 종이 질감의 웜 뉴트럴 + 단 하나의 강조색 */
+  --color-paper: #f5f3ee;
+  --color-ink: #191713;
+  --color-ink-soft: #6f6a5e;
+  --color-line: #dcd7ca;
+  --color-card: #fcfbf8;
+  --color-accent: #ff4d00;
+
+  --font-sans:
+    'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo',
+    'Noto Sans KR', system-ui, sans-serif;
+}
+
+html {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-paper);
+}
