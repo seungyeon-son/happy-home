@@ -21,6 +21,8 @@ export interface NoticeRow {
 export interface NoticeQuery {
   region?: string | undefined;
   category?: string | undefined;
+  /** 복수 유형 필터 (내 조건 충족 유형 목록). category 와 동시 사용 시 둘 다 적용(AND). */
+  categories?: string[] | undefined;
   source?: string | undefined;
   q?: string | undefined;
   /** true 면 마감 안 지난 공고만 (마감일 없는 공고 포함) */
@@ -82,6 +84,13 @@ export function queryNotices(q: NoticeQuery): NoticePage {
   if (q.category) {
     where.push('category = @category');
     params.category = q.category;
+  }
+  if (q.categories && q.categories.length > 0) {
+    const keys = q.categories.map((_, i) => `@cat${i}`);
+    where.push(`category IN (${keys.join(', ')})`);
+    q.categories.forEach((c, i) => {
+      params[`cat${i}`] = c;
+    });
   }
   if (q.source) {
     where.push('source = @source');

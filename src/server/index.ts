@@ -28,6 +28,7 @@ app.get('/api/notices', (c) => {
     queryNotices({
       region: p.region || undefined,
       category: p.category || undefined,
+      categories: p.categories ? p.categories.split(',').filter(Boolean) : undefined,
       source: p.source || undefined,
       q: p.q || undefined,
       openOnly: p.open === '1',
