@@ -24,6 +24,14 @@ npm run server
 | `npm run scrape` | 저장 없이 수집 결과만 출력 (파서 점검용) |
 | `cd web && npm run dev` | 프론트 개발 서버 (API는 3000 포트로 프록시) |
 
+## 배포 (무료 스택: Vercel + Turso + cron-job.org)
+
+- **Vercel**: `web/dist` 정적 호스팅 + `api/[[...path]].ts` 서버리스 함수 (빌드 설정은 `vercel.json`)
+- **Turso**: libsql DB. 환경변수 `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` 설정 (없으면 로컬 파일 `file:data/happy-home.db` 사용)
+- **수집 크론**: cron-job.org 가 30분마다 `POST /api/ingest` 호출 (`Authorization: Bearer $CRON_SECRET`).
+  Vercel Cron 이 매일 06:00 KST 백업 실행. `CRON_SECRET` 미설정 시 인증 생략(로컬용)
+- 자체 호스팅(Docker/Railway)도 여전히 가능: `Dockerfile` + `npm run server` (내장 30분 크론 포함)
+
 ## 구조
 
 ```

@@ -1,4 +1,4 @@
-import { getDb } from './index.js';
+import { ensureSchema, getDb } from './index.js';
 
 /** API 응답용 공고 (camelCase). isNew 는 first_seen_at 기준 48시간 이내 여부. */
 export interface NoticeRow {
@@ -23,7 +23,6 @@ export interface NoticeQuery {
   category?: string | undefined;
   /** 복수 유형 필터 (내 조건 충족 유형 목록). category 와 동시 사용 시 둘 다 적용(AND). */
   categories?: string[] | undefined;
-  source?: string | undefined;
   q?: string | undefined;
   /** true 면 마감 안 지난 공고만 (마감일 없는 공고 포함) */
   openOnly?: boolean | undefined;
@@ -56,7 +55,7 @@ function toRow(r: any): NoticeRow {
     );
   }
   return {
-    id: r.id,
+    id: Number(r.id),
     source: r.source,
     externalId: r.external_id,
     category: r.category,
@@ -72,37 +71,31 @@ function toRow(r: any): NoticeRow {
   };
 }
 
-export function queryNotices(q: NoticeQuery): NoticePage {
+export async function queryNotices(q: NoticeQuery): Promise<NoticePage> {
+  await ensureSchema();
   const db = getDb();
   const where: string[] = [];
-  const params: Record<string, unknown> = {};
+  const args: (string | number)[] = [];
 
   if (q.region) {
-    where.push('region = @region');
-    params.region = q.region;
+    where.push('region = ?');
+    args.push(q.region);
   }
   if (q.category) {
-    where.push('category = @category');
-    params.category = q.category;
+    where.push('category = ?');
+    args.push(q.category);
   }
   if (q.categories && q.categories.length > 0) {
-    const keys = q.categories.map((_, i) => `@cat${i}`);
-    where.push(`category IN (${keys.join(', ')})`);
-    q.categories.forEach((c, i) => {
-      params[`cat${i}`] = c;
-    });
-  }
-  if (q.source) {
-    where.push('source = @source');
-    params.source = q.source;
+    where.push(`category IN (${q.categories.map(() => '?').join(', ')})`);
+    args.push(...q.categories);
   }
   if (q.q) {
-    where.push('title LIKE @q');
-    params.q = `%${q.q}%`;
+    where.push('title LIKE ?');
+    args.push(`%${q.q}%`);
   }
   if (q.openOnly) {
-    where.push('(closes_at IS NULL OR closes_at >= @today)');
-    params.today = today();
+    where.push('(closes_at IS NULL OR closes_at >= ?)');
+    args.push(today());
   }
 
   const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
@@ -115,33 +108,46 @@ export function queryNotices(q: NoticeQuery): NoticePage {
   const limit = Math.min(Math.max(q.limit ?? 24, 1), 100);
   const page = Math.max(q.page ?? 1, 1);
 
-  const total = (
-    db.prepare(`SELECT COUNT(*) AS c FROM notices ${whereSql}`).get(params) as { c: number }
-  ).c;
-  const rows = db
-    .prepare(`SELECT * FROM notices ${whereSql} ${orderSql} LIMIT @limit OFFSET @offset`)
-    .all({ ...params, limit, offset: (page - 1) * limit });
+  const [countRs, rowsRs] = await Promise.all([
+    db.execute({ sql: `SELECT COUNT(*) AS c FROM notices ${whereSql}`, args }),
+    db.execute({
+      sql: `SELECT * FROM notices ${whereSql} ${orderSql} LIMIT ? OFFSET ?`,
+      args: [...args, limit, (page - 1) * limit],
+    }),
+  ]);
 
-  return { items: rows.map(toRow), total, page, limit };
+  return {
+    items: rowsRs.rows.map(toRow),
+    total: Number(countRs.rows[0]!.c),
+    page,
+    limit,
+  };
 }
 
 /** 필터 UI 구성용 메타데이터 */
-export function queryMeta() {
+export async function queryMeta() {
+  await ensureSchema();
   const db = getDb();
-  const group = (col: string) =>
-    db
-      .prepare(`SELECT ${col} AS value, COUNT(*) AS count FROM notices GROUP BY ${col} ORDER BY count DESC`)
-      .all() as { value: string; count: number }[];
+  const group = async (col: string) => {
+    const rs = await db.execute(
+      `SELECT ${col} AS value, COUNT(*) AS count FROM notices GROUP BY ${col} ORDER BY count DESC`,
+    );
+    return rs.rows.map((r) => ({ value: String(r.value), count: Number(r.count) }));
+  };
 
-  const lastIngestAt =
-    (db.prepare('SELECT MAX(last_seen_at) AS m FROM notices').get() as { m: string | null }).m ??
-    null;
+  const [regions, categories, sources, totalRs, lastRs] = await Promise.all([
+    group('region'),
+    group('category'),
+    group('source'),
+    db.execute('SELECT COUNT(*) AS c FROM notices'),
+    db.execute('SELECT MAX(last_seen_at) AS m FROM notices'),
+  ]);
 
   return {
-    total: (db.prepare('SELECT COUNT(*) AS c FROM notices').get() as { c: number }).c,
-    regions: group('region'),
-    categories: group('category'),
-    sources: group('source'),
-    lastIngestAt,
+    total: Number(totalRs.rows[0]!.c),
+    regions,
+    categories,
+    sources,
+    lastIngestAt: (lastRs.rows[0]!.m as string | null) ?? null,
   };
 }
