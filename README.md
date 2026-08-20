@@ -24,6 +24,37 @@ npm run server
 | `npm run scrape` | 저장 없이 수집 결과만 출력 (파서 점검용) |
 | `cd web && npm run dev` | 프론트 개발 서버 (API는 3000 포트로 프록시) |
 
+## 매일/매주 확인하는 법 (배포 없이 맥에서)
+
+**방법 1 — 웹 UI (권장).** 서버를 켜고 브라우저에서 "내 조건" 팝업 사용:
+
+```bash
+npm run server
+```
+
+http://localhost:3000 접속. 켜져 있는 동안 30분마다 자동 수집한다.
+
+**방법 2 — 터미널 한 줄.** 최신 공고를 가져와 내 조건에 맞는 것만 출력:
+
+```bash
+npm run my
+```
+
+최초 1회만 조건 등록이 필요하다 (my-profile.json 에 저장, git 추적 제외):
+
+```bash
+npm run my -- --setup --nohouse --asset --youth --income=100
+```
+
+| 플래그 | 의미 |
+|---|---|
+| `--nohouse` / `--account` / `--asset` | 무주택 / 청약통장 / 자산기준 충족 |
+| `--youth` `--newlywed` `--student` `--senior` `--single-parent` `--recipient` | 해당 사항 (복수 가능) |
+| `--income=50\|70\|100\|130\|999` | 도시근로자 월평균소득 대비 |
+| `--days=7` | 최근 7일 게시분만 |
+| `--region=서울특별시` | 지역 한정 |
+| `--no-fetch` | 수집 생략, DB 조회만 |
+
 ## 배포 (무료 스택: Vercel + Turso + cron-job.org)
 
 - **Vercel**: `web/dist` 정적 호스팅 + `api/[[...path]].ts` 서버리스 함수 (빌드 설정은 `vercel.json`)

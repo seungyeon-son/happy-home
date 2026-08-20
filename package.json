@@ -10,7 +10,8 @@
     "ingest": "tsx src/pipeline/ingest.ts",
     "watch": "tsx src/pipeline/watch.ts",
     "server": "tsx src/server/index.ts",
-    "start": "tsx src/server/index.ts"
+    "start": "tsx src/server/index.ts",
+    "my": "tsx src/pipeline/mine.ts"
   },
   "keywords": [],
   "author": "",
