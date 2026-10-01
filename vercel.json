@@ -2,5 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "cd web && npm install && npm run build",
   "outputDirectory": "web/dist",
-  "crons": [{ "path": "/api/ingest", "schedule": "0 21 * * *" }]
+  "env": { "SCRAPE_INTERVAL_MS": "400" },
+  "rewrites": [{ "source": "/((?!api/).*)", "destination": "/index.html" }]
 }

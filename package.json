@@ -11,7 +11,8 @@
     "watch": "tsx src/pipeline/watch.ts",
     "server": "tsx src/server/index.ts",
     "start": "tsx src/server/index.ts",
-    "my": "tsx src/pipeline/mine.ts"
+    "my": "tsx src/pipeline/mine.ts",
+    "server:live": "DATA_MODE=live SCRAPE_INTERVAL_MS=400 tsx src/server/index.ts"
   },
   "keywords": [],
   "author": "",

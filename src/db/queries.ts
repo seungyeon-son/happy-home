@@ -1,42 +1,7 @@
 import { ensureSchema, getDb } from './index.js';
 
-/** API 응답용 공고 (camelCase). isNew 는 first_seen_at 기준 48시간 이내 여부. */
-export interface NoticeRow {
-  id: number;
-  source: string;
-  externalId: string;
-  category: string;
-  title: string;
-  region: string;
-  postedAt: string;
-  closesAt: string | null;
-  status: string | null;
-  detailUrl: string;
-  firstSeenAt: string;
-  isNew: boolean;
-  /** 마감까지 남은 일수 (오늘 마감=0, 지났거나 마감일 없으면 null) */
-  daysLeft: number | null;
-}
-
-export interface NoticeQuery {
-  region?: string | undefined;
-  category?: string | undefined;
-  /** 복수 유형 필터 (내 조건 충족 유형 목록). category 와 동시 사용 시 둘 다 적용(AND). */
-  categories?: string[] | undefined;
-  q?: string | undefined;
-  /** true 면 마감 안 지난 공고만 (마감일 없는 공고 포함) */
-  openOnly?: boolean | undefined;
-  sort?: 'latest' | 'deadline' | undefined;
-  page?: number | undefined;
-  limit?: number | undefined;
-}
-
-export interface NoticePage {
-  items: NoticeRow[];
-  total: number;
-  page: number;
-  limit: number;
-}
+export type { NoticeRow, NoticeQuery, NoticePage } from './types.js';
+import type { NoticeRow, NoticeQuery, NoticePage } from './types.js';
 
 const NEW_WINDOW_HOURS = 48;
 

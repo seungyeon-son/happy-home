@@ -55,13 +55,30 @@ npm run my -- --setup --nohouse --asset --youth --income=100
 | `--region=서울특별시` | 지역 한정 |
 | `--no-fetch` | 수집 생략, DB 조회만 |
 
-## 배포 (무료 스택: Vercel + Turso + cron-job.org)
+## 배포 (Vercel, 무료 · 계정 하나면 끝)
 
-- **Vercel**: `web/dist` 정적 호스팅 + `api/[[...path]].ts` 서버리스 함수 (빌드 설정은 `vercel.json`)
-- **Turso**: libsql DB. 환경변수 `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` 설정 (없으면 로컬 파일 `file:data/happy-home.db` 사용)
-- **수집 크론**: cron-job.org 가 30분마다 `POST /api/ingest` 호출 (`Authorization: Bearer $CRON_SECRET`).
-  Vercel Cron 이 매일 06:00 KST 백업 실행. `CRON_SECRET` 미설정 시 인증 생략(로컬용)
-- 자체 호스팅(Docker/Railway)도 여전히 가능: `Dockerfile` + `npm run server` (내장 30분 크론 포함)
+1. [vercel.com](https://vercel.com) GitHub 로그인 → **Add New → Project** → 이 저장소 Import
+2. 설정 건드릴 것 없이 **Deploy**
+
+환경변수도, 외부 DB도, 크론도 필요 없다. Vercel 에는 영구 디스크가 없으므로
+서버리스 함수가 요청을 받을 때 LH·SH 를 직접 수집해서 메모리에 30분 캐시하고,
+응답은 CDN 이 한 번 더 캐시한다(`s-maxage=1800`). 실제 공공기관 사이트 호출은 시간당 1~2회.
+
+| | live 모드 (Vercel) | db 모드 (로컬·자체 호스팅) |
+|---|---|---|
+| 저장소 | 메모리 스냅샷 (DB 없음) | SQLite(libsql) 누적 저장 |
+| 수집 | 요청 시 자동 (30분 캐시) | 30분 크론 + `/api/ingest` |
+| 공고 범위 | 각 소스 최신 2페이지 (약 120건) | 수집한 모든 공고 누적 |
+| NEW 기준 | 게시 48시간 내 | 최초 수집 48시간 내 |
+
+모드는 자동 선택된다 (Vercel = live, 그 외 = db). 로컬에서 Vercel 과 동일하게 돌려보려면:
+
+```bash
+npm run server:live
+```
+
+자체 호스팅(Docker/Railway 등)은 `Dockerfile` + `npm run server` 로 db 모드 그대로 쓸 수 있고,
+그 경우에만 Turso(`TURSO_DATABASE_URL`/`TURSO_AUTH_TOKEN`)와 크론(`CRON_SECRET`)이 의미가 있다.
 
 ## 구조
 
